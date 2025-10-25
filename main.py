@@ -45,8 +45,8 @@ async def create_bin_if_needed():
                 "seen_images_hot": [],
                 "recent_love_responses": [],
                 "recent_hot_responses": [],
-                "seen_hallo",
-                "recent_hallo_texts",
+                "seen_hallo": [],
+                "recent_hallo_texts": [],
                 "heart_stats": {},
                 "hot_stats": {},
                 "last_heart_channel_id": None
@@ -68,8 +68,8 @@ async def load_memory_jsonbin():
             "seen_images_hot": [],
             "recent_love_responses": [],
             "recent_hot_responses": [],
-            "seen_hallo",
-            "recent_hallo_texts",
+            "seen_hallo": [],
+            "recent_hallo_texts": [],
             "heart_stats": {},
             "hot_stats": {},
             "last_heart_channel_id": None
@@ -91,8 +91,8 @@ async def load_memory_jsonbin():
                     "recent_hot_responses": [],
                     "heart_stats": {},
                     "hot_stats": {},
-                    "seen_hallo",
-                    "recent_hallo_texts",
+                    "seen_hallo": [],
+                    "recent_hallo_texts": [],
                     "last_heart_channel_id": None
                 }
 
