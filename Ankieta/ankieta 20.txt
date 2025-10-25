@@ -1,0 +1,6 @@
+Grasz w gry na telefonie?  
+
+📲 - Tak, cały czas  
+📞 - Tak, od czasu do czasu  
+☎️ - Tak, ale rzadko  
+🍌 - Nie, nie gram 
