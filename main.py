@@ -18,6 +18,7 @@ HEART_CHANNEL_ID = int(os.environ.get("HEART_CHANNEL_ID"))
 HOT_CHANNEL_ID = int(os.environ.get("HOT_CHANNEL_ID"))
 ANKIETA_CHANNEL_ID = int(os.environ.get("ANKIETA_CHANNEL_ID"))
 MEMORY_CHANNEL_ID = int(os.environ.get("MEMORY_CHANNEL_ID"))
+HALLOWEEN_ID = int(os.environ.get("HALLOWEEN_ID"))
 
 # ─── JSONBin Konfiguracja ─────────────────────────────
 JSONBIN_API = "https://api.jsonbin.io/v3/b"
@@ -65,6 +66,8 @@ async def load_memory_jsonbin():
             "seen_images_hot": [],
             "recent_love_responses": [],
             "recent_hot_responses": [],
+            "seen_hallo",
+            "recent_hallo_texts",
             "heart_stats": {},
             "hot_stats": {},
             "last_heart_channel_id": None
@@ -86,6 +89,8 @@ async def load_memory_jsonbin():
                     "recent_hot_responses": [],
                     "heart_stats": {},
                     "hot_stats": {},
+                    "seen_hallo",
+                    "recent_hallo_texts",
                     "last_heart_channel_id": None
                 }
 
@@ -541,6 +546,48 @@ async def on_message(message: discord.Message):
         else:
             await target_channel.send(response_text)
         return
+    # ─── Reakcja 🧛 i 🎃 ─────────────────────────────
+    HALLOWEEN_EMOJIS = ["🧛", "🎃"]
+    if any(h in content for h in HALLOWEEN_EMOJIS):
+        target_channel = bot.get_channel(HALLOWEEN_ID) or message.channel
+        folder = "hallophoto"
+        text_file = "halloteksty.txt"
+
+        # Ładowanie tekstów
+        hallo_texts = load_lines(text_file)
+
+        # Ładowanie pamięci
+        seen_hallo = memory.get("seen_hallo", [])
+        recent_hallo_texts = memory.get("recent_hallo_texts", [])
+
+        # Wybór tekstu
+        if not hallo_texts:
+            response_text = "🎃 Brak tekstów w pliku halloteksty.txt!"
+        else:
+            available_texts = [t for t in hallo_texts if t not in recent_hallo_texts] or hallo_texts
+            response_text = random.choice(available_texts)
+            recent_hallo_texts.append(response_text)
+            # Ograniczamy do ostatnich 100
+            memory["recent_hallo_texts"] = recent_hallo_texts[-100:]
+            await save_memory_jsonbin(memory)
+
+        # Wybór obrazka lub GIF-a
+        img = None
+        if os.path.exists(folder):
+            files = [f for f in os.listdir(folder) if f.lower().endswith((".png", ".jpg", ".jpeg", ".gif"))]
+            available_files = [f for f in files if f not in seen_hallo] or files
+            img = random.choice(available_files)
+            seen_hallo.append(img)
+            memory["seen_hallo"] = seen_hallo[-500:]
+            await save_memory_jsonbin(memory)
+
+        # Wysłanie wiadomości
+        if img:
+            await target_channel.send(response_text, file=discord.File(os.path.join(folder, img)))
+        else:
+            await target_channel.send(response_text)
+        return
+        
 
     # ─── Komenda OSTATNIE ─────────────────────────────
     if content == "ostatnie":
@@ -654,6 +701,8 @@ async def main():
     seen_images_hot = memory.get("seen_images_hot", [])
     recent_love_responses = memory.get("recent_love_responses", [])
     recent_hot_responses = memory.get("recent_hot_responses", [])
+    memory["seen_hallo"] = list(dict.fromkeys(memory.get("seen_hallo", [])))
+    memory["recent_hallo_texts"] = list(dict.fromkeys(memory.get("recent_hallo_texts", [])))
     keep_alive()
     async with bot:
         asyncio.create_task(schedule_memes())
