@@ -45,6 +45,8 @@ async def create_bin_if_needed():
                 "seen_images_hot": [],
                 "recent_love_responses": [],
                 "recent_hot_responses": [],
+                "seen_hallo",
+                "recent_hallo_texts",
                 "heart_stats": {},
                 "hot_stats": {},
                 "last_heart_channel_id": None
