@@ -472,7 +472,7 @@ async def on_message(message):
         await save_memory_jsonbin(memory)
     
         # Wysyłanie odpowiedzi (tekst + obrazek)
-         target_channel = bot.get_channel(HOT_CHANNEL_ID) or message.channel
+        target_channel = bot.get_channel(HOT_CHANNEL_ID) or message.channel
         folder = "hot"
     
         if not pickup_lines_hot:
