@@ -427,8 +427,15 @@ async def on_message(message):
     HEART_EMOJIS = ["<3", "❤", "❤️", "♥️", "♥", "🤍", "💙", "🩵", "💚", "💛", "💜", "🖤", "🤎", "🧡", "💗", "🩶", "🩷", "💖"]
     HOT_EMOJIS = ["🔥", "gorąco", "goraco"]
 
-    # ─── Reakcja ❤️ ─────────────────────────────
+
+# ─── Reakcja ❤️ ─────────────────────────────
     if any(heart in content for heart in HEART_EMOJIS):
+        # Zliczamy tylko treść wiadomości
+        user_id = str(message.author.id)
+        memory["heart_stats"][user_id] = memory["heart_stats"].get(user_id, 0) + 1
+        await save_memory_jsonbin(memory)
+
+        # Wysyłanie odpowiedzi (tekst + obrazek)
         target_channel = bot.get_channel(HEART_CHANNEL_ID) or message.channel
         folder = "images"
 
@@ -440,7 +447,7 @@ async def on_message(message):
             recent_love_responses.append(response_text)
             memory["recent_love_responses"] = recent_love_responses[-100:]
             await save_memory_jsonbin(memory)
-
+    
         img = None
         if os.path.exists(folder):
             files = [f for f in os.listdir(folder) if f.lower().endswith((".png", ".jpg", ".jpeg", ".gif"))]
@@ -457,10 +464,17 @@ async def on_message(message):
         return
 
     # ─── Reakcja 🔥 ─────────────────────────────
-    elif any(hot in content for hot in HOT_EMOJIS):
-        target_channel = bot.get_channel(HOT_CHANNEL_ID) or message.channel
+    HOT_EMOJIS = ["🔥", "gorąco", "goraco"]
+    if any(hot in content for hot in HOT_EMOJIS):
+        # Zliczamy tylko treść wiadomości
+        user_id = str(message.author.id)
+        memory["hot_stats"][user_id] = memory["hot_stats"].get(user_id, 0) + 1
+        await save_memory_jsonbin(memory)
+    
+        # Wysyłanie odpowiedzi (tekst + obrazek)
+         target_channel = bot.get_channel(HOT_CHANNEL_ID) or message.channel
         folder = "hot"
-
+    
         if not pickup_lines_hot:
             response_text = "🔥 ...ale brak tekstów w pliku kuszace.txt!"
         else:
@@ -478,7 +492,7 @@ async def on_message(message):
             seen_images_hot.append(img)
             memory["seen_images_hot"] = seen_images_hot[-500:]
             await save_memory_jsonbin(memory)
-
+    
         if img:
             await target_channel.send(response_text, file=discord.File(os.path.join(folder, img)))
         else:
