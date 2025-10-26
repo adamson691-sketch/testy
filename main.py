@@ -369,7 +369,7 @@ async def schedule_memes():
     await bot.wait_until_ready()
     while not bot.is_closed():
         now = datetime.now(tz)
-        targets = [(11, 0), (21, 37), (14,31)]
+        targets = [(11, 0), (21, 37),]
         next_time = None
         for hour, minute in targets:
             t = now.replace(hour=hour, minute=minute, second=0, microsecond=0)
@@ -402,14 +402,12 @@ async def schedule_ankiety():
         await asyncio.sleep(wait_seconds)
         await send_ankieta()
 
-  # ─── Cotygodniowy ranking ─────────────────────────────
-@tasks.loop(time=time(hour=19, minute=0))
+# ─── Cotygodniowy ranking ─────────────────────────────
 async def send_weekly_ranking():
     memory = await load_memory_jsonbin()
-    last_heart_channel_id = memory.get("last_heart_channel_id") or HEART_CHANNEL_ID
-    channel = bot.get_channel(int(last_heart_channel_id))
+    channel = bot.get_channel(HEART_CHANNEL_ID)
     if not channel:
-        print("❌ Nie znaleziono kanału do rankingu")
+        print("❌ Nie znaleziono kanału HEART_CHANNEL_ID do rankingu")
         return
 
     heart_stats = memory.get("heart_stats", {})
@@ -436,39 +434,36 @@ async def send_weekly_ranking():
     heart_winner = None
     hot_winner = None
     if top_hearts:
-        try: heart_winner = await bot.fetch_user(int(top_hearts[0][0]))
-        except: pass
+        try:
+            heart_winner = await bot.fetch_user(int(top_hearts[0][0]))
+        except:
+            pass
     if top_hots:
-        try: hot_winner = await bot.fetch_user(int(top_hots[0][0]))
-        except: pass
+        try:
+            hot_winner = await bot.fetch_user(int(top_hots[0][0]))
+        except:
+            pass
 
     winner_text = ""
     if heart_winner:
         winner_text += f"\n💘 **Największym romantykiem tygodnia jest {heart_winner.mention}!** 💞\n"
     if hot_winner:
-        winner_text += f"\n😈 **Hmmm największym napaleńcem tego tygodnia jest {hot_winner.mention}!** 🔥\n"
+        winner_text += f"\n😈 **Największym napaleńcem tygodnia jest {hot_winner.mention}!** 🔥\n"
 
     embed = discord.Embed(
-        title="🏆 COTYGODNIOWY RANKING REAKCJI",
+        title="🏆 RANKING TYGODNIOWY (Niedziela 16:00)",
         description=f"{heart_text}\n\n{hot_text}\n\n{winner_text}",
         color=0xFFD700
     )
-    embed.set_footer(text="Automatyczny raport z niedzieli 19:00")
+    embed.set_footer(text="Automatyczny raport z niedzieli 16:00")
     await channel.send(embed=embed)
 
-    # Reset
+    # Reset statystyk po wysłaniu
     memory["heart_stats"] = {}
     memory["hot_stats"] = {}
     await save_memory_jsonbin(memory)
-    print("♻️ Cotygodniowy ranking wysłany, statystyki zresetowane.")
+    print("♻️ Ranking wysłany i statystyki zresetowane.")
     
-@bot.event
-async def on_message(message: discord.Message):
-    global memory, recent_love_responses, recent_hot_responses, seen_images_love, seen_images_hot
-
-    if message.author == bot.user:
-        return
-
     content = message.content.strip().lower()
 
     # ─── Komenda MEMY ─────────────────────────────
@@ -664,6 +659,13 @@ async def on_message(message: discord.Message):
         await send_book(love_images, "images", "❤️")
         await send_book(hot_images, "hot", "🔥")
         return
+    
+    # ─── Komenda "Ranking tygodniowy" ─────────────────────────────
+    if content == "ranking tygodniowy":
+        await message.add_reaction("✅")
+        await send_weekly_ranking()
+        return
+       
 
     await bot.process_commands(message)
 
