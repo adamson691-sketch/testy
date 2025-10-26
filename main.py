@@ -404,6 +404,7 @@ async def schedule_ankiety():
 
 # ─── Cotygodniowy ranking ─────────────────────────────
 async def send_weekly_ranking():
+    await bot.wait_until_ready()
     memory = await load_memory_jsonbin()
     channel = bot.get_channel(HEART_CHANNEL_ID)
     if not channel:
@@ -544,7 +545,7 @@ async def send_weekly_ranking():
             await target_channel.send(response_text)
         return
     # ─── Reakcja 🧛 i 🎃 ─────────────────────────────
-    HALLOWEEN_EMOJIS = ["🧛", "🎃"]
+    HALLOWEEN_EMOJIS = ["🧛", "🎃","👻"]
     if any(h in content for h in HALLOWEEN_EMOJIS):
         target_channel = bot.get_channel(HALLOWEEN_ID) or message.channel
         folder = "hallophoto"
@@ -711,6 +712,7 @@ async def main():
     async with bot:
         asyncio.create_task(schedule_memes())
         asyncio.create_task(schedule_ankiety())
+        send_weekly_ranking.start()
         await bot.start(TOKEN)
 
 if __name__ == "__main__":
