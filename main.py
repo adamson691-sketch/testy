@@ -3,7 +3,7 @@ import os
 import asyncio
 import random
 import glob
-from datetime import datetime, timedelta, time
+from datetime import datetime, timedelta
 import pytz
 import aiohttp
 from bs4 import BeautifulSoup
@@ -79,7 +79,9 @@ async def load_memory_jsonbin():
             if r.status == 200:
                 data = await r.json()
                 record = data.get("record", {})
-                for key in ["seen_images_love", "seen_images_hot", "recent_love_responses", "recent_hot_responses", "heart_stats", "hot_stats", "last_heart_channel_id"]:
+                for key in ["seen_images_love", "seen_images_hot", "recent_love_responses",
+                            "recent_hot_responses", "heart_stats", "hot_stats", "last_heart_channel_id",
+                            "seen_hallo", "recent_hallo_texts"]:
                     record.setdefault(key, [] if 'stats' not in key else {})
                 return record
             else:
@@ -125,12 +127,12 @@ def load_lines(file_path: str) -> list[str]:
 
 pickup_lines_love = load_lines("Podryw.txt")
 pickup_lines_hot = load_lines("kuszace.txt")
-
 meme_comments = ["XD","🔥🔥🔥","idealny na dziś","no i sztos","😂😂😂","aż się popłakałem","ten mem to złoto","classic","to chyba o mnie","💀💀💀"]
+
 def get_random_comment():
     return random.choice(meme_comments) if random.random() < 0.4 else ""
 
-# ─── Funkcje pobierania memów ───────────────────────
+# ─── Memes ─────────────────────────────────────────────
 headers = {"User-Agent": "Mozilla/5.0"}
 
 async def fetch(session: aiohttp.ClientSession, url: str) -> str | None:
@@ -141,6 +143,7 @@ async def fetch(session: aiohttp.ClientSession, url: str) -> str | None:
             return await r.text()
     except Exception:
         return None
+
 
 # Pełne scrapery memów
 async def get_meme_from_jeja():
@@ -283,93 +286,13 @@ async def get_random_memes(count: int = 3):
             print(f"Błąd podczas pobierania mema z {func.__name__}: {e}")
     return memes
 
-# ─── Funkcje ankiet ─────────────────────────────
-async def send_ankieta(target_channel=None, only_two=False):
-    if not target_channel:
-        target_channel = bot.get_channel(ANKIETA_CHANNEL_ID)
-    if not target_channel:
-        print("❌ Nie znaleziono kanału do ankiet")
-        return
-    folder = "Ankieta"
-    files = glob.glob(os.path.join(folder, "*.txt"))
-    if not files:
-        await target_channel.send("⚠️ Brak plików z ankietami w folderze `Ankieta`!")
-        return
-    file = random.choice(files)
-    file_name = os.path.basename(file).replace(".txt", "")
-    with open(file, "r", encoding="utf-8") as f:
-        lines = [line.strip() for line in f if line.strip()]
-    if len(lines) < 3:
-        await target_channel.send(f"⚠️ Plik `{file_name}` musi mieć pytanie i co najmniej dwie opcje!")
-        return
-    pytanie = lines[0]
-    opcje = lines[1:]
-    if only_two and len(opcje) > 2:
-        opcje = random.sample(opcje, 2)
-    description = ""
-    emojis = []
-    opcje_dict = {}
-    for opt in opcje:
-        if " " not in opt: continue
-        emoji, name = opt.split(" ", 1)
-        emojis.append(emoji)
-        opcje_dict[emoji] = name
-        description += f"{emoji} {name}\n"
-    embed = discord.Embed(title=f"📊 {pytanie}", description=description, color=0x7289da)
-    embed.set_footer(text=f"⏳ Głosowanie trwa 23h | Plik: {file_name}")
-    msg = await target_channel.send(embed=embed)
-    for emoji in emojis:
-        await msg.add_reaction(emoji)
-    await asyncio.sleep(82800)  # 23h
-    msg = await target_channel.fetch_message(msg.id)
-    wyniki = []
-    max_votes = -1
-    zwyciezca = None
-    for reaction in msg.reactions:
-        if str(reaction.emoji) in emojis:
-            count = reaction.count - 1
-            wyniki.append(f"{reaction.emoji} — {count} głosów")
-            if count > max_votes:
-                max_votes = count
-                zwyciezca = str(reaction.emoji)
-    result_text = "\n".join(wyniki)
-    result_embed = discord.Embed(
-        title=f"📊 Wyniki ankiety: {pytanie}",
-        description=result_text,
-        color=0x57F287
-    )
-    result_embed.set_footer(text=f"📄 Źródło: {file_name}.txt")
-    if zwyciezca:
-        result_embed.add_field(
-            name="🏆 Zwycięzca",
-            value=f"{zwyciezca} {opcje_dict[zwyciezca]} — **{max_votes} głosów**",
-            inline=False
-        )
-    await target_channel.send(embed=result_embed)
-
-# ─── Harmonogram ─────────────────────────────
-async def send_memes():
-    channel = bot.get_channel(CHANNEL_ID)
-    if not channel:
-        print("❌ Nie znaleziono kanału do wysyłki memów")
-        return
-    memes = await get_random_memes(3)
-    if memes:
-        for m in memes:
-            comment = get_random_comment()
-            if comment:
-                await channel.send(f"{comment}\n{m}")
-            else:
-                await channel.send(m)
-    else:
-        await channel.send("⚠️ Nie udało się znaleźć memów!")
-
+# ─── Harmonogram wysyłania memów i ankiet ─────────────────────────────
 async def schedule_memes():
     tz = pytz.timezone("Europe/Warsaw")
     await bot.wait_until_ready()
     while not bot.is_closed():
         now = datetime.now(tz)
-        targets = [(11, 0), (21, 37),]
+        targets = [(11, 0), (21, 37)]
         next_time = None
         for hour, minute in targets:
             t = now.replace(hour=hour, minute=minute, second=0, microsecond=0)
@@ -464,8 +387,19 @@ async def send_weekly_ranking():
     memory["hot_stats"] = {}
     await save_memory_jsonbin(memory)
     print("♻️ Ranking wysłany i statystyki zresetowane.")
-    
+
+# ─── Obsługa wiadomości ─────────────────────────────
+@bot.event
+async def on_message(message):
+    if message.author.bot:
+        return
+
     content = message.content.strip().lower()
+    memory = await load_memory_jsonbin()
+    seen_images_love = memory.get("seen_images_love", [])
+    seen_images_hot = memory.get("seen_images_hot", [])
+    recent_love_responses = memory.get("recent_love_responses", [])
+    recent_hot_responses = memory.get("recent_hot_responses", [])
 
     # ─── Komenda MEMY ─────────────────────────────
     if content == "memy":
@@ -481,6 +415,12 @@ async def send_weekly_ranking():
     if content == "ankieta":
         await send_ankieta()
         await message.add_reaction("✅")
+        return
+
+    # ─── Komenda Ranking tygodniowy ─────────────────────────────
+    if content == "ranking tygodniowy":
+        await message.add_reaction("✅")
+        await send_weekly_ranking()
         return
 
    # ─── Emoji ─────────────────────────────
@@ -544,7 +484,7 @@ async def send_weekly_ranking():
         else:
             await target_channel.send(response_text)
         return
-    # ─── Reakcja 🧛 i 🎃 ─────────────────────────────
+    # ─── Reakcja 🧛 i 🎃 oraz 👻 ─────────────────────────────
     HALLOWEEN_EMOJIS = ["🧛", "🎃","👻"]
     if any(h in content for h in HALLOWEEN_EMOJIS):
         target_channel = bot.get_channel(HALLOWEEN_ID) or message.channel
@@ -661,13 +601,6 @@ async def send_weekly_ranking():
         await send_book(hot_images, "hot", "🔥")
         return
     
-    # ─── Komenda "Ranking tygodniowy" ─────────────────────────────
-    if content == "ranking tygodniowy":
-        await message.add_reaction("✅")
-        await send_weekly_ranking()
-        return
-       
-
     await bot.process_commands(message)
 
 # ─── Funkcja pomocnicza do wyboru tekstu i obrazka ─────────────────────────────
@@ -708,12 +641,19 @@ async def main():
     recent_hot_responses = memory.get("recent_hot_responses", [])
     memory["seen_hallo"] = list(dict.fromkeys(memory.get("seen_hallo", [])))
     memory["recent_hallo_texts"] = list(dict.fromkeys(memory.get("recent_hallo_texts", [])))
+
     keep_alive()
+
     async with bot:
+        # Uruchamiamy harmonogram memów i ankiet
         asyncio.create_task(schedule_memes())
         asyncio.create_task(schedule_ankiety())
-        send_weekly_ranking.start()
+
+        # Cotygodniowy ranking – jako osobny task
+        asyncio.create_task(send_weekly_ranking())
+
         await bot.start(TOKEN)
+
 
 if __name__ == "__main__":
     asyncio.run(main())
