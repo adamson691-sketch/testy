@@ -6,6 +6,7 @@ import glob
 from datetime import datetime, timedelta
 import pytz
 import aiohttp
+import re
 from bs4 import BeautifulSoup
 import discord
 from discord.ext import commands, tasks
@@ -131,6 +132,41 @@ meme_comments = ["XD","🔥🔥🔥","idealny na dziś","no i sztos","😂😂�
 
 def get_random_comment():
     return random.choice(meme_comments) if random.random() < 0.4 else ""
+# ─── Automatyczne wysyłanie memów ─────────────────────────────
+async def send_memes():
+    channel = bot.get_channel(MEMORY_CHANNEL_ID)
+    if not channel:
+        print("❌ Nie znaleziono kanału memów (MEMORY_CHANNEL_ID)")
+        return
+
+    memes = await get_random_memes(3)
+    if not memes:
+        await channel.send("⚠️ Nie udało się znaleźć memów!")
+        return
+
+    for meme_url in memes:
+        comment = get_random_comment()
+        await channel.send(comment)
+        await channel.send(meme_url)
+
+    print(f"✅ Wysłano {len(memes)} memy automatycznie.")
+
+
+# --- Funkcje harmonogramów (schedule_memes, schedule_ankiety itd.) ---
+async def schedule_memes():
+    ...
+
+async def schedule_ankiety():
+    ...
+
+# --- Główna funkcja startowa bota ---
+async def main():
+    asyncio.create_task(schedule_memes())
+    asyncio.create_task(schedule_ankiety())
+    ...
+    await bot.start(TOKEN)
+
+
 
 # ─── Memes ─────────────────────────────────────────────
 headers = {"User-Agent": "Mozilla/5.0"}
@@ -324,6 +360,99 @@ async def schedule_ankiety():
         print(f"⏳ Czekam {wait_seconds/3600:.2f}h do ankiety")
         await asyncio.sleep(wait_seconds)
         await send_ankieta()
+# ─── Wysyłanie ankiety z blokadą po 23h i wynikami ─────────────────────────────
+async def send_ankieta():
+    folder = "ankieta"
+    channel = bot.get_channel(ANKIETA_CHANNEL_ID)
+
+    if not channel:
+        print("❌ Nie znaleziono kanału ankiet (ANKIETA_CHANNEL_ID)")
+        return
+
+    if not os.path.exists(folder):
+        print("⚠️ Folder 'ankieta' nie istnieje!")
+        return
+
+    # Lista plików .txt w folderze
+    files = [f for f in os.listdir(folder) if f.lower().endswith(".txt")]
+    if not files:
+        print("⚠️ Brak plików ankiet w folderze 'ankieta'")
+        return
+
+    # Losowy plik ankiety
+    chosen_file = random.choice(files)
+    file_path = os.path.join(folder, chosen_file)
+
+    with open(file_path, "r", encoding="utf-8") as f:
+        lines = [line.strip() for line in f.readlines() if line.strip()]
+
+    if not lines:
+        print(f"⚠️ Plik {chosen_file} jest pusty!")
+        return
+
+    # Pierwsza linia to pytanie
+    pytanie = lines[0]
+
+    # Kolejne linie to opcje z emoji
+    opcje = lines[1:] if len(lines) > 1 else []
+
+    # Wyciągnięcie emoji z początku każdej opcji
+    reakcje = []
+    for linia in opcje:
+        match = re.match(r"^(\X)", linia, re.UNICODE)
+        if match:
+            emoji = match.group(1).strip()
+            reakcje.append(emoji)
+
+    # Tworzymy embed
+    opis = "\n".join(opcje)
+    embed = discord.Embed(
+        title="🗳️ ANKIETA DNIA",
+        description=f"{pytanie}\n\n{opis}",
+        color=0x00FFCC
+    )
+    embed.set_footer(text=f"Źródło: {chosen_file}")
+
+    # Wysyłamy ankietę
+    msg = await channel.send(embed=embed)
+
+    # Dodajemy reakcje
+    for emoji in reakcje:
+        try:
+            await msg.add_reaction(emoji)
+        except Exception as e:
+            print(f"⚠️ Nie udało się dodać reakcji {emoji}: {e}")
+
+    print(f"✅ Wysłano ankietę z pliku: {chosen_file}")
+
+    # 🕒 Czekamy 23 godziny
+    await asyncio.sleep(23 * 3600)
+
+    # 🕐 Czekamy 2 minuty i pobieramy wyniki
+    await asyncio.sleep(2 * 60)
+
+    try:
+        updated_msg = await channel.fetch_message(msg.id)
+        results = []
+        for reaction in updated_msg.reactions:
+            # -1, żeby nie liczyć reakcji bota
+            results.append(f"{reaction.emoji}: {reaction.count - 1}")
+
+        wyniki_txt = "\n".join(results) if results else "Brak głosów."
+
+        result_embed = discord.Embed(
+            title="📊 Wyniki ankiety",
+            description=f"**{pytanie}**\n\n{wyniki_txt}",
+            color=0x2ECC71
+        )
+
+        await channel.send(embed=result_embed)
+        print("📊 Wyniki ankiety wysłane.")
+
+    except Exception as e:
+        print(f"⚠️ Błąd przy pobieraniu wyników: {e}")
+
+        pass
 
 # ─── Cotygodniowy ranking ─────────────────────────────
 async def send_weekly_ranking():
@@ -498,9 +627,10 @@ async def on_message(message):
         else:
             await target_channel.send(response_text)
         return
-    # ─── Reakcja 🧛 i 🎃 oraz 👻 ─────────────────────────────
-    HALLOWEEN_EMOJIS = ["🧛", "🎃","👻"]
+# ─── Reakcja 🎃👻🧛 ─────────────────────────────
+    HALLOWEEN_EMOJIS = ["🧛", "🎃", "👻"]
     if any(h in content for h in HALLOWEEN_EMOJIS):
+        # Kanał i folder
         target_channel = bot.get_channel(HALLOWEEN_ID) or message.channel
         folder = "hallophoto"
         text_file = "halloteksty.txt"
@@ -519,10 +649,9 @@ async def on_message(message):
             available_texts = [t for t in hallo_texts if t not in recent_hallo_texts] or hallo_texts
             response_text = random.choice(available_texts)
             recent_hallo_texts.append(response_text)
-            # Ograniczamy do ostatnich 100
             memory["recent_hallo_texts"] = recent_hallo_texts[-100:]
             await save_memory_jsonbin(memory)
-
+    
         # Wybór obrazka lub GIF-a
         img = None
         if os.path.exists(folder):
@@ -671,3 +800,4 @@ async def main():
 
 if __name__ == "__main__":
     asyncio.run(main())
+
