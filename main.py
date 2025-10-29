@@ -150,13 +150,6 @@ async def send_memes():
         await channel.send(meme_url)
 
     print(f"✅ Wysłano {len(memes)} memy automatycznie.")
-
-
-# --- Funkcje harmonogramów (schedule_memes, schedule_ankiety itd.) ---
-async def schedule_memes():
-    ...
-
-async def schedule_ankiety():
     
 
 # ─── Memes ─────────────────────────────────────────────
