@@ -541,7 +541,7 @@ async def on_message(message):
         return
 
     # ─── Komenda ANKIETA ─────────────────────────────
-    if content == "ankieta":
+    if content == "Ankieta":
         await send_ankieta()
         await message.add_reaction("✅")
         return
