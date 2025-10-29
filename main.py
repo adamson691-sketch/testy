@@ -157,16 +157,7 @@ async def schedule_memes():
     ...
 
 async def schedule_ankiety():
-    ...
-
-# --- Główna funkcja startowa bota ---
-async def main():
-    asyncio.create_task(schedule_memes())
-    asyncio.create_task(schedule_ankiety())
-    ...
-    await bot.start(TOKEN)
-
-
+    
 
 # ─── Memes ─────────────────────────────────────────────
 headers = {"User-Agent": "Mozilla/5.0"}
@@ -541,7 +532,7 @@ async def on_message(message):
         return
 
     # ─── Komenda ANKIETA ─────────────────────────────
-    if content == "Ankieta":
+    if content.lower() == "ankieta":
         await send_ankieta()
         await message.add_reaction("✅")
         return
