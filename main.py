@@ -399,6 +399,9 @@ async def send_ankieta():
 
     # Wysyłamy ankietę
     msg = await channel.send(embed=embed)
+    print("📤 Próba wysłania ankiety...")
+    print(f"Pytanie: {pytanie}")
+    print(f"Opcje: {opcje}")
 
     # Dodajemy reakcje
     for emoji in reakcje:
