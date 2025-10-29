@@ -412,7 +412,7 @@ async def send_ankieta():
     # 🕐 Uruchom odliczanie wyników w tle (nie blokuj bota!)
     asyncio.create_task(wait_and_post_results(channel.id, msg.id, pytanie))
 
-    async def wait_and_post_results(channel_id, msg_id, pytanie):
+async def wait_and_post_results(channel_id, msg_id, pytanie):
     """Funkcja uruchamiana w tle — czeka i wysyła wyniki."""
     await asyncio.sleep(23 * 3600 + 2 * 60)  # 23h + 2 min
     try:
