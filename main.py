@@ -347,97 +347,13 @@ async def schedule_ankiety():
         
 # ─── Wysyłanie ankiety z blokadą po 23h i wynikami ─────────────────────────────
 async def send_ankieta():
-    folder = "ankieta"
+    print("✅ Funkcja send_ankieta() uruchomiona!")
     channel = bot.get_channel(ANKIETA_CHANNEL_ID)
-
     if not channel:
-        print("❌ Nie znaleziono kanału ankiet (ANKIETA_CHANNEL_ID)")
+        print("❌ Nie znaleziono kanału!")
         return
-
-    if not os.path.exists(folder):
-        print("⚠️ Folder 'ankieta' nie istnieje!")
-        return
-
-    # Lista plików .txt w folderze
-    files = [f for f in os.listdir(folder) if f.lower().endswith(".txt")]
-    if not files:
-        print("⚠️ Brak plików ankiet w folderze 'ankieta'")
-        return
-
-    # Losowy plik ankiety
-    chosen_file = random.choice(files)
-    file_path = os.path.join(folder, chosen_file)
-
-    with open(file_path, "r", encoding="utf-8") as f:
-        lines = [line.strip() for line in f.readlines() if line.strip()]
-
-    if not lines:
-        print(f"⚠️ Plik {chosen_file} jest pusty!")
-        return
-
-    # Pierwsza linia to pytanie
-    pytanie = lines[0]
-
-    # Kolejne linie to opcje z emoji
-    opcje = lines[1:] if len(lines) > 1 else []
-
-    # Wyciągnięcie emoji z początku każdej opcji
-    reakcje = []
-    for linia in opcje:
-        match = re.match(r"^(\X)", linia, re.UNICODE)
-        if match:
-            emoji = match.group(1).strip()
-            reakcje.append(emoji)
-
-    # Tworzymy embed
-    opis = "\n".join(opcje)
-    embed = discord.Embed(
-        title="🗳️ ANKIETA DNIA",
-        description=f"{pytanie}\n\n{opis}",
-        color=0x00FFCC
-    )
-    embed.set_footer(text=f"Źródło: {chosen_file}")
-
-    # Wysyłamy ankietę
-    msg = await channel.send(embed=embed)
-
-    # Dodajemy reakcje
-    for emoji in reakcje:
-        try:
-            await msg.add_reaction(emoji)
-        except Exception as e:
-            print(f"⚠️ Nie udało się dodać reakcji {emoji}: {e}")
-
-    print(f"✅ Wysłano ankietę z pliku: {chosen_file}")
-
-    # 🕒 Czekamy 23 godziny
-    await asyncio.sleep(23 * 3600)
-
-    # 🕐 Czekamy 2 minuty i pobieramy wyniki
-    await asyncio.sleep(2 * 60)
-
-    try:
-        updated_msg = await channel.fetch_message(msg.id)
-        results = []
-        for reaction in updated_msg.reactions:
-            # -1, żeby nie liczyć reakcji bota
-            results.append(f"{reaction.emoji}: {reaction.count - 1}")
-
-        wyniki_txt = "\n".join(results) if results else "Brak głosów."
-
-        result_embed = discord.Embed(
-            title="📊 Wyniki ankiety",
-            description=f"**{pytanie}**\n\n{wyniki_txt}",
-            color=0x2ECC71
-        )
-
-        await channel.send(embed=result_embed)
-        print("📊 Wyniki ankiety wysłane.")
-
-    except Exception as e:
-        print(f"⚠️ Błąd przy pobieraniu wyników: {e}")
-
-        pass
+    await channel.send("📊 Testowa ankieta działa!")
+    print("📨 Wiadomość wysłana.")
 
 # ─── Cotygodniowy ranking ─────────────────────────────
 async def send_weekly_ranking():
