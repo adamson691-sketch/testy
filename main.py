@@ -343,7 +343,8 @@ async def schedule_ankiety():
         wait_seconds = max(1, int((next_time - now).total_seconds()))
         print(f"⏳ Czekam {wait_seconds/3600:.2f}h do ankiety")
         await asyncio.sleep(wait_seconds)
-        await send_ankieta()
+        asyncio.create_task(send_ankieta())
+        
 # ─── Wysyłanie ankiety z blokadą po 23h i wynikami ─────────────────────────────
 async def send_ankieta():
     folder = "ankieta"
@@ -526,10 +527,10 @@ async def on_message(message):
 
     # ─── Komenda ANKIETA ─────────────────────────────
     if content.lower() == "ankieta":
-        await send_ankieta()
+        asyncio.create_task(send_ankieta())  
         await message.add_reaction("✅")
         return
-
+        
     # ─── Komenda Ranking tygodniowy ─────────────────────────────
     if content == "ranking tygodniowy":
         await message.add_reaction("✅")
