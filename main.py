@@ -362,7 +362,7 @@ async def schedule_ankiety():
         await send_ankieta()
 # ─── Wysyłanie ankiety z blokadą po 23h i wynikami ─────────────────────────────
 async def send_ankieta():
-    folder = "Ankieta"
+    folder = "ankieta"
     channel = bot.get_channel(ANKIETA_CHANNEL_ID)
 
     if not channel:
