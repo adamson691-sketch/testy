@@ -312,7 +312,7 @@ async def schedule_memes():
     await bot.wait_until_ready()
     while not bot.is_closed():
         now = datetime.now(tz)
-        targets = [(11, 0), (8,20)]
+        targets = [(11, 0), (8,30)]
         next_time = None
         for hour, minute in targets:
             t = now.replace(hour=hour, minute=minute, second=0, microsecond=0)
@@ -331,7 +331,7 @@ async def schedule_ankiety():
     await bot.wait_until_ready()
     while not bot.is_closed():
         now = datetime.now(tz)
-        targets = [(8, 18)]
+        targets = [(8, 29)]
         next_time = None
         for hour, minute in targets:
             t = now.replace(hour=hour, minute=minute, second=0, microsecond=0)
@@ -345,99 +345,69 @@ async def schedule_ankiety():
         await asyncio.sleep(wait_seconds)
         asyncio.create_task(send_ankieta())
         
-# ─── Wysyłanie ankiety z blokadą po 23h i wynikami ─────────────────────────────
-async def send_ankieta():
-    folder = "ankieta"
-    channel = bot.get_channel(ANKIETA_CHANNEL_ID)
-
-    if not channel:
-        print("❌ Nie znaleziono kanału ankiet (ANKIETA_CHANNEL_ID)")
+# ─── Funkcje ankiet ─────────────────────────────
+async def send_ankieta(target_channel=None, only_two=False):
+    if not target_channel:
+        target_channel = bot.get_channel(ANKIETA_CHANNEL_ID)
+    if not target_channel:
+        print("❌ Nie znaleziono kanału do ankiet")
         return
-
-    if not os.path.exists(folder):
-        print("⚠️ Folder 'ankieta' nie istnieje!")
-        return
-
-    # Lista plików .txt w folderze
-    files = [f for f in os.listdir(folder) if f.lower().endswith(".txt")]
+    folder = "Ankieta"
+    files = glob.glob(os.path.join(folder, "*.txt"))
     if not files:
-        print("⚠️ Brak plików ankiet w folderze 'ankieta'")
+        await target_channel.send("⚠️ Brak plików z ankietami w folderze `Ankieta`!")
         return
-
-    # Losowy plik ankiety
-    chosen_file = random.choice(files)
-    file_path = os.path.join(folder, chosen_file)
-
-    with open(file_path, "r", encoding="utf-8") as f:
-        lines = [line.strip() for line in f.readlines() if line.strip()]
-
-    if not lines:
-        print(f"⚠️ Plik {chosen_file} jest pusty!")
+    file = random.choice(files)
+    file_name = os.path.basename(file).replace(".txt", "")
+    with open(file, "r", encoding="utf-8") as f:
+        lines = [line.strip() for line in f if line.strip()]
+    if len(lines) < 3:
+        await target_channel.send(f"⚠️ Plik `{file_name}` musi mieć pytanie i co najmniej dwie opcje!")
         return
-
-    # Pierwsza linia to pytanie
     pytanie = lines[0]
-
-    # Kolejne linie to opcje (np. "✅ Tak", "❌ Nie")
-    opcje = lines[1:] if len(lines) > 1 else []
-
-    # Wyciągnięcie emoji z początku każdej opcji
-    reakcje = []
-    for linia in opcje:
-        if len(linia) > 0:
-            emoji = linia.split()[0]  # pierwsze "słowo" to emoji
-            reakcje.append(emoji)
-
-    # Tworzymy embed
-    opis = "\n".join(opcje)
-    embed = discord.Embed(
-        title="🗳️ ANKIETA DNIA",
-        description=f"**{pytanie}**\n\n{opis}",
-        color=0x00FFCC
+    opcje = lines[1:]
+    if only_two and len(opcje) > 2:
+        opcje = random.sample(opcje, 2)
+    description = ""
+    emojis = []
+    opcje_dict = {}
+    for opt in opcje:
+        if " " not in opt: continue
+        emoji, name = opt.split(" ", 1)
+        emojis.append(emoji)
+        opcje_dict[emoji] = name
+        description += f"{emoji} {name}\n"
+    embed = discord.Embed(title=f"📊 {pytanie}", description=description, color=0x7289da)
+    embed.set_footer(text=f"⏳ Głosowanie trwa 23h | Plik: {file_name}")
+    msg = await target_channel.send(embed=embed)
+    for emoji in emojis:
+        await msg.add_reaction(emoji)
+    await asyncio.sleep(82800)  # 23h
+    msg = await target_channel.fetch_message(msg.id)
+    wyniki = []
+    max_votes = -1
+    zwyciezca = None
+    for reaction in msg.reactions:
+        if str(reaction.emoji) in emojis:
+            count = reaction.count - 1
+            wyniki.append(f"{reaction.emoji} — {count} głosów")
+            if count > max_votes:
+                max_votes = count
+                zwyciezca = str(reaction.emoji)
+    result_text = "\n".join(wyniki)
+    result_embed = discord.Embed(
+        title=f"📊 Wyniki ankiety: {pytanie}",
+        description=result_text,
+        color=0x57F287
     )
-    embed.set_footer(text=f"Źródło: {chosen_file}")
-
-    # Wysyłamy ankietę
-    msg = await channel.send(embed=embed)
-    print("📤 Próba wysłania ankiety...")
-    print(f"Pytanie: {pytanie}")
-    print(f"Opcje: {opcje}")
-
-    # Dodajemy reakcje
-    for emoji in reakcje:
-        try:
-            await msg.add_reaction(emoji)
-        except Exception as e:
-            print(f"⚠️ Nie udało się dodać reakcji {emoji}: {e}")
-
-    print(f"✅ Wysłano ankietę z pliku: {chosen_file}")
-
-    # 🕐 Uruchom odliczanie wyników w tle (nie blokuj bota!)
-    asyncio.create_task(wait_and_post_results(channel.id, msg.id, pytanie))
-
-async def wait_and_post_results(channel_id, msg_id, pytanie):
-    """Funkcja uruchamiana w tle — czeka i wysyła wyniki."""
-    await asyncio.sleep(23 * 3600 + 2 * 60)  # 23h + 2 min
-    try:
-        channel = await bot.fetch_channel(channel_id)
-        msg = await channel.fetch_message(msg_id)
-
-        results = []
-        for reaction in msg.reactions:
-            results.append(f"{reaction.emoji}: {reaction.count - 1}")
-
-        wyniki_txt = "\n".join(results) if results else "Brak głosów."
-
-        result_embed = discord.Embed(
-            title="📊 Wyniki ankiety",
-            description=f"**{pytanie}**\n\n{wyniki_txt}",
-            color=0x2ECC71
+    result_embed.set_footer(text=f"📄 Źródło: {file_name}.txt")
+    if zwyciezca:
+        result_embed.add_field(
+            name="🏆 Zwycięzca",
+            value=f"{zwyciezca} {opcje_dict[zwyciezca]} — **{max_votes} głosów**",
+            inline=False
         )
-
-        await channel.send(embed=result_embed)
-        print("📊 Wyniki ankiety wysłane.")
-    except Exception as e:
-        print(f"⚠️ Błąd przy pobieraniu wyników: {e}")
+    await target_channel.send(embed=result_embed)
 
 
 # ─── Cotygodniowy ranking ─────────────────────────────
