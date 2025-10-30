@@ -329,19 +329,21 @@ async def schedule_memes():
 async def schedule_ankiety():
     tz = pytz.timezone("Europe/Warsaw")
     await bot.wait_until_ready()
+
+    target_hour = 8
+    target_minute = 40
+
     while not bot.is_closed():
         now = datetime.now(tz)
-        targets = [(8, 29)]
-        next_time = None
-        for hour, minute in targets:
-            t = now.replace(hour=hour, minute=minute, second=0, microsecond=0)
-            if t > now:
-                next_time = t
-                break
-        if not next_time:
-            next_time = tz.localize(datetime(now.year, now.month, now.day, targets[0][0], targets[0][1])) + timedelta(days=1)
-        wait_seconds = max(1, int((next_time - now).total_seconds()))
-        print(f"⏳ Czekam {wait_seconds/3600:.2f}h do ankiety")
+        next_time = tz.localize(datetime(now.year, now.month, now.day, target_hour, target_minute))
+
+        # jeśli dzisiejsza godzina już minęła → zaplanuj na jutro
+        if next_time <= now:
+            next_time += timedelta(days=1)
+
+        wait_seconds = (next_time - now).total_seconds()
+        print(f"⏳ Czekam {wait_seconds/3600:.2f}h do następnej ankiety ({next_time.strftime('%H:%M')})")
+
         await asyncio.sleep(wait_seconds)
         asyncio.create_task(send_ankieta())
         
