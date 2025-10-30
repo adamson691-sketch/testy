@@ -345,6 +345,31 @@ async def schedule_ankiety():
 
         await asyncio.sleep(wait_seconds)
         asyncio.create_task(send_ankieta())
+
+
+async def schedule_weekly_ranking():
+    tz = pytz.timezone("Europe/Warsaw")
+    await bot.wait_until_ready()
+
+    while not bot.is_closed():
+        now = datetime.now(tz)
+
+        # wyznacz najbliższą niedzielę 16:00
+        days_ahead = (6 - now.weekday()) % 7  # niedziela = 6
+        next_sunday = now + timedelta(days=days_ahead)
+        target_time = next_sunday.replace(hour=16, minute=0, second=0, microsecond=0)
+
+        # jeśli dzisiaj już po 16:00, zaplanuj na kolejną niedzielę
+        if target_time <= now:
+            target_time += timedelta(days=7)
+
+        wait_seconds = (target_time - now).total_seconds()
+        print(f"⏳ Czekam {(wait_seconds/3600):.2f}h do rankingu tygodniowego ({target_time.strftime('%A %H:%M')})")
+
+        await asyncio.sleep(wait_seconds)
+        await send_weekly_ranking()
+
+    
         
 # ─── Funkcje ankiet ─────────────────────────────
 async def send_ankieta(target_channel=None, only_two=False):
@@ -748,9 +773,10 @@ async def main():
         # Uruchamiamy harmonogram memów i ankiet
         asyncio.create_task(schedule_memes())
         asyncio.create_task(schedule_ankiety())
+        asyncio.create_task(schedule_weekly_ranking())
 
         # Cotygodniowy ranking – jako osobny task
-        asyncio.create_task(send_weekly_ranking())
+        # asyncio.create_task(send_weekly_ranking())
 
         await bot.start(TOKEN)
 
