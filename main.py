@@ -355,9 +355,9 @@ async def schedule_weekly_ranking():
         now = datetime.now(tz)
 
         # wyznacz najbliższą niedzielę 16:00
-        days_ahead = (3 - now.weekday()) % 7  # niedziela = 6
+        days_ahead = (6 - now.weekday()) % 7  # niedziela = 6
         next_sunday = now + timedelta(days=days_ahead)
-        target_time = next_sunday.replace(hour=9, minute=48, second=0, microsecond=0)
+        target_time = next_sunday.replace(hour=16, minute=0, second=0, microsecond=0)
 
         # jeśli dzisiaj już po 16:00, zaplanuj na kolejną niedzielę
         if target_time <= now:
