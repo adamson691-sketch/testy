@@ -311,7 +311,7 @@ async def schedule_memes():
     tz = pytz.timezone("Europe/Warsaw")
     await bot.wait_until_ready()
 
-    targets = [(11, 0), (21, 37), (13, 8]  # godziny wysyłki memów
+    targets = [(11, 0), (21, 37), (13, 8)]  # godziny wysyłki memów
     last_sent = None  # pamięta ostatni czas wysyłki (dzień, godzina, minuta)
 
     while not bot.is_closed():
