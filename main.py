@@ -20,6 +20,7 @@ HOT_CHANNEL_ID = int(os.environ.get("HOT_CHANNEL_ID"))
 ANKIETA_CHANNEL_ID = int(os.environ.get("ANKIETA_CHANNEL_ID"))
 MEMORY_CHANNEL_ID = int(os.environ.get("MEMORY_CHANNEL_ID"))
 HALLOWEEN_ID = int(os.environ.get("HALLOWEEN_ID"))
+MEMY_CHANNEL_ID = int(os.environ.get("MEMY_CHANNEL_ID"))
 
 # ─── JSONBin Konfiguracja ─────────────────────────────
 JSONBIN_API = "https://api.jsonbin.io/v3/b"
@@ -134,7 +135,7 @@ def get_random_comment():
     return random.choice(meme_comments) if random.random() < 0.4 else ""
 # ─── Automatyczne wysyłanie memów ─────────────────────────────
 async def send_memes():
-    channel = bot.get_channel(MEMORY_CHANNEL_ID)
+    channel = bot.get_channel(MEMY_CHANNEL_ID)
     if not channel:
         print("❌ Nie znaleziono kanału memów (MEMORY_CHANNEL_ID)")
         return
@@ -311,7 +312,7 @@ async def schedule_memes():
     tz = pytz.timezone("Europe/Warsaw")
     await bot.wait_until_ready()
 
-    targets = [(11, 0), (21, 37), (13, 30)]  # godziny wysyłki memów
+    targets = [(11, 0), (21, 37), (13, 43)]  # godziny wysyłki memów
     last_sent = None  # pamięta ostatni czas wysyłki (dzień, godzina, minuta)
 
     while not bot.is_closed():
