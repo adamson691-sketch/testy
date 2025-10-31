@@ -137,7 +137,7 @@ def get_random_comment():
 async def send_memes():
     channel = bot.get_channel(MEMY_CHANNEL_ID)
     if not channel:
-        print("❌ Nie znaleziono kanału memów (MEMY_CHANNEL_ID")
+        print("❌ Nie znaleziono kanału memów (MEMY_CHANNEL_ID)")
         return
 
     memes = await get_random_memes(3)
@@ -147,7 +147,8 @@ async def send_memes():
 
     for meme_url in memes:
         comment = get_random_comment()
-        await channel.send(comment)
+        if comment:  # wysyłamy komentarz tylko jeśli istnieje
+            await channel.send(comment)
         await channel.send(meme_url)
 
     print(f"✅ Wysłano {len(memes)} memy automatycznie.")
@@ -312,7 +313,7 @@ async def schedule_memes():
     tz = pytz.timezone("Europe/Warsaw")
     await bot.wait_until_ready()
 
-    targets = [(11, 0), (14, 50), (21, 37)]
+    targets = [(11, 0), (14, 58), (21, 37)]
 
     while not bot.is_closed():
         now = datetime.now(tz)
