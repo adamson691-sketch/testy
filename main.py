@@ -137,7 +137,7 @@ def get_random_comment():
 async def send_memes():
     channel = bot.get_channel(MEMY_CHANNEL_ID)
     if not channel:
-        print("❌ Nie znaleziono kanału memów (MEMORY_CHANNEL_ID)")
+        print("❌ Nie znaleziono kanału memów (MEMY_CHANNEL_ID")
         return
 
     memes = await get_random_memes(3)
