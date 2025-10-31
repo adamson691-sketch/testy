@@ -759,9 +759,9 @@ async def main():
     keep_alive()
 
     async with bot:
-    asyncio.create_task(schedule_memes())
-    asyncio.create_task(schedule_ankiety())
-    asyncio.create_task(schedule_weekly_ranking())
+        asyncio.create_task(schedule_memes())
+        asyncio.create_task(schedule_ankiety())
+        asyncio.create_task(schedule_weekly_ranking())
     await bot.start(TOKEN)
 
 
