@@ -312,7 +312,7 @@ async def schedule_memes():
     tz = pytz.timezone("Europe/Warsaw")
     await bot.wait_until_ready()
 
-    targets = [(11, 0), (13, 58), (21, 37)]
+    targets = [(11, 0), (14, 50), (21, 37)]
 
     while not bot.is_closed():
         now = datetime.now(tz)
