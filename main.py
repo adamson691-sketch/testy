@@ -312,21 +312,25 @@ async def schedule_memes():
     tz = pytz.timezone("Europe/Warsaw")
     await bot.wait_until_ready()
 
-    targets = [(11, 0), (21, 37), (13, 45)]  # godziny wysyłki memów
-    last_sent = None  # pamięta ostatni czas wysyłki (dzień, godzina, minuta)
+    targets = [(11, 0), (13, 58), (21, 37)]
 
     while not bot.is_closed():
         now = datetime.now(tz)
-        current_time = (now.day, now.hour, now.minute)
+        next_target = None
+        for hour, minute in sorted(targets):
+            t = now.replace(hour=hour, minute=minute, second=0, microsecond=0)
+            if t > now:
+                next_target = t
+                break
+        if not next_target:
+            # jeśli wszystkie godziny już minęły, ustaw na pierwszy target jutro
+            next_target = datetime(now.year, now.month, now.day, targets[0][0], targets[0][1], tzinfo=tz) + timedelta(days=1)
 
-        for hour, minute in targets:
-            if now.hour == hour and now.minute == minute:
-                if last_sent != current_time:
-                    print(f"🖼️ Wysyłam mema ({hour:02d}:{minute:02d})")
-                    await send_memes()
-                    last_sent = current_time  # zapamiętaj, że już wysłał w tej minucie
-        await asyncio.sleep(30)
-
+        wait_seconds = (next_target - now).total_seconds()
+        print(f"⏳ Czekam {wait_seconds/60:.1f} min do wysyłki memów")
+        await asyncio.sleep(wait_seconds)
+        print(f"🖼️ Wysyłam mema ({next_target.hour:02d}:{next_target.minute:02d})")
+        await send_memes()
 
 async def schedule_ankiety():
     tz = pytz.timezone("Europe/Warsaw")
