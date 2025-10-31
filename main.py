@@ -311,52 +311,58 @@ async def schedule_memes():
     tz = pytz.timezone("Europe/Warsaw")
     await bot.wait_until_ready()
 
-    targets = [(11, 0), (21, 37), (12, 59),]  # godziny wysyłki memów
+    targets = [(11, 0), (21, 37), (13, 8]  # godziny wysyłki memów
+    last_sent = None  # pamięta ostatni czas wysyłki (dzień, godzina, minuta)
 
     while not bot.is_closed():
         now = datetime.now(tz)
+        current_time = (now.day, now.hour, now.minute)
+
         for hour, minute in targets:
             if now.hour == hour and now.minute == minute:
-                print(f"🖼️ Wysyłam mema ({hour:02d}:{minute:02d})")
-                await send_memes()
-                await asyncio.sleep(60)  # poczekaj minutę, żeby nie wysłał dwa razy
-                break
-        await asyncio.sleep(30)  # sprawdzaj co 30 sekund
+                if last_sent != current_time:
+                    print(f"🖼️ Wysyłam mema ({hour:02d}:{minute:02d})")
+                    await send_memes()
+                    last_sent = current_time  # zapamiętaj, że już wysłał w tej minucie
+        await asyncio.sleep(30)
+
 
 async def schedule_ankiety():
     tz = pytz.timezone("Europe/Warsaw")
     await bot.wait_until_ready()
 
-    target_hour = 12
-    target_minute = 57
+    target_hour = 13
+    target_minute = 12
+    last_sent = None
 
     while not bot.is_closed():
         now = datetime.now(tz)
+        current_time = (now.day, now.hour, now.minute)
 
         if now.hour == target_hour and now.minute == target_minute:
-            print("🗳️ Wysyłam ankietę!")
-            await send_ankieta()
-            await asyncio.sleep(60)  # odczekaj minutę, żeby nie wysłał dwa razy w tej samej minucie
-        else:
-            await asyncio.sleep(30)  # sprawdzaj co 30 sekund
-
-        asyncio.create_task(send_ankieta())
+            if last_sent != current_time:
+                print("🗳️ Wysyłam ankietę!")
+                await send_ankieta()
+                last_sent = current_time
+        await asyncio.sleep(30)
 
 
 async def schedule_weekly_ranking():
     tz = pytz.timezone("Europe/Warsaw")
     await bot.wait_until_ready()
 
+    last_sent = None
+
     while not bot.is_closed():
         now = datetime.now(tz)
+        current_time = (now.isocalendar().week, now.weekday(), now.hour, now.minute)
 
-        # niedziela = 6
-        if now.weekday() == 4 and now.hour == 12 and now.minute == 55:
-            print("🏆 Wysyłam ranking tygodniowy!")
-            await send_weekly_ranking()
-            await asyncio.sleep(60)
-        else:
-            await asyncio.sleep(30)
+        if now.weekday() == 4 and now.hour == 13 and now.minute == 10:  # niedziela 16:00
+            if last_sent != current_time:
+                print("🏆 Wysyłam ranking tygodniowy!")
+                await send_weekly_ranking()
+                last_sent = current_time
+        await asyncio.sleep(30)
 
     
         
