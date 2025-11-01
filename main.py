@@ -538,7 +538,7 @@ async def on_message(message):
     #  ─── wyprawa ─────────────────────────────
     
     if "wyprawa po marchew" in content.lower():
-    target_channel = message.channel
+    channel = bot.get_channel(HEART_CHANNEL_ID)
     folder = "kozaz"
     text_file = "kozat"
 
