@@ -631,8 +631,9 @@ async def on_message(message):
         await save_memory_jsonbin(memory)
     
         # Wysyłanie odpowiedzi (tekst + obrazek)
-        target_channel = bot.get_channel(HOT_CHANNEL_ID) or message.channel
-        folder = "hot"
+        possible_folders = ["hot", "gif_hot"]
+        existing_folders = [f for f in possible_folders if os.path.exists(f)]
+        folder = random.choice(existing_folders) if existing_folders else "hot"
     
         if not pickup_lines_hot:
             response_text = "🔥 ...ale brak tekstów w pliku kuszace.txt!"
