@@ -538,18 +538,18 @@ async def on_message(message):
     #  ─── wyprawa ─────────────────────────────
     
     if "wyprawa po marchew" in content.lower():
-    channel = bot.get_channel(HEART_CHANNEL_ID)
-    folder = "kozaz"
-    text_file = "kozat"
+        channel = bot.get_channel(HEART_CHANNEL_ID)
+        folder = "kozaz"
+        text_file = "kozat"
 
-    # Ładowanie tekstów
-    march_texts = load_lines(text_file)
+        # Ładowanie tekstów
+        march_texts = load_lines(text_file)
 
-    # Ładowanie pamięci
-    seen_march = memory.get("seen_march", [])
-    recent_march_texts = memory.get("recent_march_texts", [])
+        # Ładowanie pamięci
+        seen_march = memory.get("seen_march", [])
+        recent_march_texts = memory.get("recent_march_texts", [])
 
-    # Wybór tekstu
+        # Wybór tekstu
     if not march_texts:
         response_text = "🥕 Brak tekstów w pliku kozat!"
     else:
