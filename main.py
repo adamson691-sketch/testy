@@ -536,11 +536,10 @@ async def on_message(message):
         return
 
     #  ─── wyprawa ─────────────────────────────
-    
     if "wyprawa po marchew" in content.lower():
-        channel = bot.get_channel(HEART_CHANNEL_ID)
+        target_channel = bot.get_channel(HEART_CHANNEL_ID)
         folder = "kozaz"
-        text_file = "kozat"
+        text_file = "kozat.txt"
 
         # Ładowanie tekstów
         march_texts = load_lines(text_file)
@@ -550,34 +549,34 @@ async def on_message(message):
         recent_march_texts = memory.get("recent_march_texts", [])
 
         # Wybór tekstu
-    if not march_texts:
-        response_text = "🥕 Brak tekstów w pliku kozat!"
-    else:
-        available_texts = [t for t in march_texts if t not in recent_march_texts] or march_texts
-        response_text = random.choice(available_texts)
-        recent_march_texts.append(response_text)
-        memory["recent_march_texts"] = recent_march_texts[-100:]
-        await save_memory_jsonbin(memory)
+        if not march_texts:
+            response_text = "🥕 Brak tekstów w pliku kozat!"
+        else:
+            available_texts = [t for t in march_texts if t not in recent_march_texts] or march_texts
+            response_text = random.choice(available_texts)
+            recent_march_texts.append(response_text)
+            memory["recent_march_texts"] = recent_march_texts[-100:]
+            await save_memory_jsonbin(memory)
 
-    # Wybór obrazka
-    img = None
-    if os.path.exists(folder):
-        files = [f for f in os.listdir(folder) if f.lower().endswith((".png", ".jpg", ".jpeg", ".gif"))]
-        available_files = [f for f in files if f not in seen_march] or files
-        img = random.choice(available_files)
-        seen_march.append(img)
-        memory["seen_march"] = seen_march[-500:]
-        await save_memory_jsonbin(memory)
+        # Wybór obrazka
+        img = None
+        if os.path.exists(folder):
+            files = [f for f in os.listdir(folder) if f.lower().endswith((".png", ".jpg", ".jpeg", ".gif"))]
+            available_files = [f for f in files if f not in seen_march] or files
+            img = random.choice(available_files)
+            seen_march.append(img)
+            memory["seen_march"] = seen_march[-500:]
+            await save_memory_jsonbin(memory)
 
-    # Wysłanie wiadomości
-    if img:
-        await target_channel.send(response_text, file=discord.File(os.path.join(folder, img)))
-    else:
-        await target_channel.send(response_text)
-    return
+        # Wysłanie wiadomości
+        if img:
+            await target_channel.send(response_text, file=discord.File(os.path.join(folder, img)))
+        else:
+            await target_channel.send(response_text)
+        return
         
 
-   # ─── Emoji ─────────────────────────────
+# ─── Emoji ─────────────────────────────
     HEART_EMOJIS = ["<3", "❤", "❤️", "♥️", "♥", "🤍", "💙", "🩵", "💚", "💛", "💜", "🖤", "🤎", "🧡", "💗", "🩶", "🩷", "💖"]
     HOT_EMOJIS = ["🔥", "gorąco", "goraco"]
 
