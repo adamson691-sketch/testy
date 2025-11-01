@@ -664,7 +664,7 @@ async def on_message(message):
     else:
         await target_channel.send(response_text)
     return
-        return
+        
 # ─── Reakcja 🎃👻🧛 ─────────────────────────────
     HALLOWEEN_EMOJIS = ["🧛", "🎃", "👻"]
     if any(h in content for h in HALLOWEEN_EMOJIS):
