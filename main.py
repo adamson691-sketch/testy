@@ -313,7 +313,7 @@ async def schedule_memes():
     tz = pytz.timezone("Europe/Warsaw")
     await bot.wait_until_ready()
 
-    targets = [(11, 0), (14, 58), (21, 37)]
+    targets = [(11, 0), (21, 37)]
 
     while not bot.is_closed():
         now = datetime.now(tz)
@@ -337,8 +337,8 @@ async def schedule_ankiety():
     tz = pytz.timezone("Europe/Warsaw")
     await bot.wait_until_ready()
 
-    target_hour = 13
-    target_minute = 31
+    target_hour = 15
+    target_minute = 0
     last_sent = None
 
     while not bot.is_closed():
@@ -363,7 +363,7 @@ async def schedule_weekly_ranking():
         now = datetime.now(tz)
         current_time = (now.isocalendar().week, now.weekday(), now.hour, now.minute)
 
-        if now.weekday() == 4 and now.hour == 13 and now.minute == 35:  # niedziela 16:00
+        if now.weekday() == 6 and now.hour == 16 and now.minute == 0:  # niedziela 16:00
             if last_sent != current_time:
                 print("🏆 Wysyłam ranking tygodniowy!")
                 await send_weekly_ranking()
